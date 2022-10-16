@@ -61,6 +61,9 @@ type FilterIter([Iter, Eachable1])
 doc EXPERIMENTAL! Do not use!
 type FunIter([Iter, Eachable1])
 
+doc Iter returned when limit(i:Iter,n:Int) is called.
+type LimitIter(Iter)
+
 doc Private method of Iter.ngs, will be hidden in future.
 F throw_if_no_next(i:Iter) {
 	not(i) throws NoNext("No next element in iterator").set('iter', i)
@@ -355,6 +358,32 @@ TEST { {}.Iter().next() }.assert(NoNext)
 doc Convert Iter into JSON compatible data structure - array.
 doc Forces evaluation of MapIter for example.
 F JsonData(i:Iter) collector i.each(collect + JsonData)
+
+# ---------- LimitIter ----------
+doc Thrown when the parameter n of LimitIter(i:Iter, n:Int)'s constructor is greater than the length of iterator i.
+type LimitIterError(Error)
+
+doc Create an Iter from LimitIter
+F Iter(i:LimitIter){
+	Iter(i.val)
+}
+
+doc Initialize LimitIter type. It slices the iterator up to n.
+F init(c:LimitIter, i:Iter, n:Int){
+    c.val = i
+    try {
+		n.times({c.val.next()})
+	} catch(nn: NoNext) {
+		throw LimitIterError("Invalid value: Greater than the length of the Iter", nn)
+	} 
+    c
+}
+
+doc Returns a new LimitIter which would give a maximum of n elements
+doc %EX - limit([3, 4, 5, 10].Iter(), 2).Arr() would return [3, 4]
+F limit(i:Iter, n:Int){
+    LimitIter(i, n)
+}
 
 type SkipError(Error)
 
